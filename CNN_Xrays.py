@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
-from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.regularizers import l2
@@ -19,12 +18,12 @@ test_dir = r'C:\Users\short\Downloads\archive\chest_xray\test'
 # Step 1: Data Preprocessing and Augmentation
 train_datagen = ImageDataGenerator(
     rescale=1.0 / 255,
-    rotation_range=20,          # Moderate rotation
-    width_shift_range=0.2,      # Reduced horizontal shift
-    height_shift_range=0.2,     # Reduced vertical shift
-    shear_range=0.2,            # Moderate shear transformation
-    zoom_range=0.2,             # Moderate zoom range
-    horizontal_flip=True,       # Flip horizontally
+    rotation_range=15,
+    width_shift_range=0.15,
+    height_shift_range=0.15,
+    shear_range=0.1,
+    zoom_range=0.1,
+    horizontal_flip=True,
     fill_mode='nearest'
 )
 
@@ -35,14 +34,16 @@ train_generator = train_datagen.flow_from_directory(
     train_dir,
     target_size=(IMG_HEIGHT, IMG_WIDTH),
     batch_size=BATCH_SIZE,
-    class_mode='binary'
+    class_mode='binary',
+    shuffle=True
 )
 
 val_generator = val_datagen.flow_from_directory(
     val_dir,
     target_size=(IMG_HEIGHT, IMG_WIDTH),
     batch_size=BATCH_SIZE,
-    class_mode='binary'
+    class_mode='binary',
+    shuffle=True
 )
 
 test_generator = test_datagen.flow_from_directory(
@@ -50,32 +51,34 @@ test_generator = test_datagen.flow_from_directory(
     target_size=(IMG_HEIGHT, IMG_WIDTH),
     batch_size=BATCH_SIZE,
     class_mode='binary',
-    shuffle=False
+    shuffle=True
 )
 
 # Step 2: Building the CNN Model
 model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', kernel_regularizer=l2(0.003), input_shape=(IMG_HEIGHT, IMG_WIDTH, 3)),
+    Conv2D(32, (3, 3), activation='relu', kernel_regularizer=l2(0.005), input_shape=(IMG_HEIGHT, IMG_WIDTH, 3)),
     MaxPooling2D((2, 2)),
 
-    Conv2D(64, (3, 3), activation='relu', kernel_regularizer=l2(0.003)),
+    Conv2D(64, (3, 3), activation='relu', kernel_regularizer=l2(0.005)),
     MaxPooling2D((2, 2)),
 
-    Conv2D(128, (3, 3), activation='relu', kernel_regularizer=l2(0.003)),
+    Conv2D(128, (3, 3), activation='relu', kernel_regularizer=l2(0.005)),
     MaxPooling2D((2, 2)),
 
-    Conv2D(256, (3, 3), activation='relu', kernel_regularizer=l2(0.003)),  # Additional convolutional block
+    Conv2D(256, (3, 3), activation='relu', kernel_regularizer=l2(0.005)),
     MaxPooling2D((2, 2)),
 
     Flatten(),
-    Dense(128, activation='relu', kernel_regularizer=l2(0.003)),
-    Dropout(0.7),  # Increased dropout rate
+    Dense(256, activation='relu', kernel_regularizer=l2(0.005)),
+    Dropout(0.8),
+    Dense(128, activation='relu', kernel_regularizer=l2(0.005)),
+    Dropout(0.8),
     Dense(1, activation='sigmoid')
 ])
 
 # Step 3: Compile the Model
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),  # Lower learning rate
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.00002),
     loss='binary_crossentropy',
     metrics=['accuracy']
 )
@@ -114,4 +117,4 @@ plt.title('Loss')
 plt.show()
 
 # Step 7: Save the Model
-model.save('cnn_pneumonia_model_v4.h5')
+model.save('cnn_pneumonia_model_v6.h5')
